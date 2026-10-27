@@ -1,4 +1,4 @@
-﻿
+
 public class Zones {
 
     // Mission 4: Kosaraju algorithm
@@ -79,5 +79,80 @@ public class Zones {
         return zoneOf;
     }
 
-}
+    // Mission 5: Longest chain and cheapest route
+    public static long[] routes(Input.Slides s, int[] zoneOf, int zoneCount) {
 
+        // Number of zones in the longest chain
+        long[] stages = new long[zoneCount];
+        java.util.Arrays.fill(stages, 1);
+
+        // Minimum cost from the starting zone
+        long INF = Long.MAX_VALUE / 4;
+        long[] dist = new long[zoneCount];
+        java.util.Arrays.fill(dist, INF);
+
+        int startZone = zoneOf[0];
+        int exitZone = zoneOf[s.n() - 1];
+
+        dist[startZone] = 0;
+
+        // Group outgoing slides by their starting zone
+        int[] counts = new int[zoneCount];
+
+        for (int i = 0; i < s.from().length; i++) {
+            int fromZone = zoneOf[s.from()[i]];
+            int toZone = zoneOf[s.to()[i]];
+
+            if (fromZone != toZone) {
+                counts[fromZone]++;
+            }
+        }
+
+        int[][] edges = new int[zoneCount][];
+
+        for (int z = 0; z < zoneCount; z++) {
+            edges[z] = new int[counts[z]];
+            counts[z] = 0;
+        }
+
+        for (int i = 0; i < s.from().length; i++) {
+            int fromZone = zoneOf[s.from()[i]];
+            int toZone = zoneOf[s.to()[i]];
+
+            if (fromZone != toZone) {
+                edges[fromZone][counts[fromZone]++] = i;
+            }
+        }
+
+        // Process zones in topological order
+        for (int z = 0; z < zoneCount; z++) {
+
+            for (int edge : edges[z]) {
+                int nextZone = zoneOf[s.to()[edge]];
+
+                // Longest chain of zones
+                stages[nextZone] = Math.max(
+                        stages[nextZone],
+                        stages[z] + 1
+                );
+
+                // Cheapest route
+                if (dist[z] != INF) {
+                    long newCost = dist[z] + s.time()[edge];
+
+                    if (newCost < dist[nextZone]) {
+                        dist[nextZone] = newCost;
+                    }
+                }
+            }
+        }
+
+        long longestChain = 0;
+
+        for (long value : stages) {
+            longestChain = Math.max(longestChain, value);
+        }
+
+        return new long[]{longestChain, dist[exitZone]};
+    }
+}
